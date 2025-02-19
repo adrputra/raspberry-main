@@ -1,0 +1,2 @@
+readMode = False
+writeMode = False
