@@ -20,3 +20,8 @@ def ReadCardBlock():
 def WriteCardBlock():
     result = service.NFCWriter(request)
     return ResponseWrapper(message="Write Card Success", status_code=200, data=result)
+
+@routes.route("/write-card-user", methods=["POST"])
+def WriteCardUser():
+    result = service.NFCWriteUser(request)
+    return ResponseWrapper(message="Write Card User Success", status_code=200, data=result)

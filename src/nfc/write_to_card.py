@@ -1,6 +1,7 @@
 import RPi.GPIO as GPIO
 import pn532.pn532 as nfc
 from pn532 import *
+from src.model.NFC import WriteCardUserRequest
 
 pn532 = PN532_I2C(debug=False, reset=20, req=16)
 pn532.SAM_configuration()
@@ -47,7 +48,7 @@ def write_text_to_card(block_number, text):
     finally:
         GPIO.cleanup()
         
-def writeCardUser(request):
+def writeCardUser(request: WriteCardUserRequest):
     print('Waiting for RFID/NFC card to write to...')
     while True:
         uid = pn532.read_passive_target(timeout=0.5)
@@ -62,8 +63,20 @@ def writeCardUser(request):
     blockInstitutionID = [16, 17, 18, 20]
 
     # Write Username
-    
+    if len(request.username) > 16:
+        for i in range(0, len(blockUsername), 1):
+            basicWrite(uid=uid, key_a=key_a, blockNumber=blockUsername[i], data=request.username[:((i+1)*16)])
+    else:
+        basicWrite(uid=uid, key_a=key_a, blockNumber=blockUsername[0], data=request.username[:16])
         
+    # Write RoleID
+    for i in range(0, len(request.roleID)//16+1, 1):
+        basicWrite(uid=uid, key_a=key_a, blockNumber=blockRoleID[0], data=request.roleID[:((i+1)*16)])
+        
+    # Write InstitutionID
+    for i in range(0, len(request.institutionID)//16+1, 1):
+        basicWrite(uid=uid, key_a=key_a, blockNumber=blockInstitutionID[0], data=request.institutionID[:((i+1)*16)])
+
 def basicWrite(uid, key_a, blockNumber, data):
     try:
         # Authenticate before writing
