@@ -1,6 +1,7 @@
 import RPi.GPIO as GPIO
 import pn532.pn532 as nfc
 from pn532 import PN532_I2C
+import time
 
 pn532 = PN532_I2C(debug=False, reset=20, req=16)
 pn532.SAM_configuration()
@@ -16,7 +17,8 @@ def read_text_from_card(block_number):
     
     timeout_counter = 10  # Set a retry limit to avoid infinite loops
     while timeout_counter > 0:
-        uid = pn532.read_passive_target(timeout=0.5)
+        time.sleep(2)
+        uid = pn532.read_passive_target(timeout=5)
         if uid:
             break
         timeout_counter -= 1
