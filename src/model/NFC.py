@@ -13,3 +13,7 @@ class WriteCardUserRequest(BaseModel):
     roleID: str
     institutionID: str
     
+class UserCheckInOutRequest(BaseModel):
+    username: str
+    source_in: str
+    source_out: str
