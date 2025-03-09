@@ -40,7 +40,7 @@ def attendance(socketio=None):
 
                 data = pn532.mifare_classic_read_block(block)
                 if data:
-                    text = data.decode('utf-8').strip()  # Decode and remove extra spaces
+                    text = data.decode('utf-8').replace('\x00', '').strip()  # Decode and remove extra spaces
                     print(f"Read successful from block {block}: '{text}'")
                     value[block] = text
                 else:
