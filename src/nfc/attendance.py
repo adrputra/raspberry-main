@@ -51,16 +51,20 @@ def attendance(socketio=None):
             roleID = value[blockRoleID[0]] + value[blockRoleID[1]] + value[blockRoleID[2]] + value[blockRoleID[3]]
 
             url = "https://bpkp-portal.eventarry.com/api/checkinout-rfid"
-            data = UserCheckInOutRequest(username=username, source_in="Raspi RFID", source_out="Raspi RFID")
+            request = {
+                "username": username,
+                "source_in": "Raspi RFID",
+                "source_out": "Raspi RFID"
+            }
 
             headers = {
                 "Content-Type": "application/json",
                 "app-role-id": roleID,
             }
 
-            print(f'REQUEST: {url, headers, data}')
+            print(f'REQUEST: {url, headers, request}')
 
-            response = requests.post(url, json=data, headers=headers)
+            response = requests.post(url, json=request, headers=headers)
 
             if response.status_code == 200:
                 print(response.json().get("message", "Attendance recorded successfully"))
