@@ -8,7 +8,7 @@ import requests
 pn532 = PN532_I2C(debug=False, reset=20, req=16)
 pn532.SAM_configuration()
 
-def attendance(request):
+def attendance():
     print('Waiting for RFID/NFC card to read from...')
     
     timeout_counter = 10  # Set a retry limit to avoid infinite loops
@@ -63,6 +63,8 @@ def attendance(request):
             "Content-Type": "application/json",
             "app-role-id": roleID,
         }
+
+        print(f'REQUEST: {url, headers, data}')
 
         response = requests.post(url, json=data, headers=headers)
 
