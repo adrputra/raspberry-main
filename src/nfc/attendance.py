@@ -9,7 +9,7 @@ import requests
 pn532 = PN532_I2C(debug=False, reset=20, req=16)
 pn532.SAM_configuration()
 
-def attendance():
+def attendance(socketio=None):
     print('Waiting for RFID/NFC card to read from...')
     
     while True:  # Infinite loop to keep scanning
