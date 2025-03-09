@@ -71,11 +71,11 @@ def writeCardUser(request: WriteCardUserRequest):
         
     # Write RoleID
     for i in range(0, len(request.role_id)//16+1, 1):
-        basicWrite(uid=uid, key_a=key_a, blockNumber=blockRoleID[0], data=request.role_id[:((i+1)*16)])
+        basicWrite(uid=uid, key_a=key_a, blockNumber=blockRoleID[i], data=request.role_id[:((i+1)*16)])
         
     # Write InstitutionID
     for i in range(0, len(request.institution_id)//16+1, 1):
-        basicWrite(uid=uid, key_a=key_a, blockNumber=blockInstitutionID[0], data=request.institution_id[:((i+1)*16)])
+        basicWrite(uid=uid, key_a=key_a, blockNumber=blockInstitutionID[i], data=request.institution_id[:((i+1)*16)])
 
 def basicWrite(uid, key_a, blockNumber, data):
     try:
@@ -84,6 +84,7 @@ def basicWrite(uid, key_a, blockNumber, data):
             print(f"Authentication failed for block {blockNumber}")
             return False
         
+        print(f"Writing Data {data}")
         data = data.encode('utf-8')  # Convert text to bytes
         data = data[:16].ljust(16, b' ')  # Ensure it fits in a 16-byte block
 
