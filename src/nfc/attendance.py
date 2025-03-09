@@ -50,7 +50,7 @@ def attendance(socketio=None):
             username = value[blockUsername[0]] + value[blockUsername[1]]
             roleID = value[blockRoleID[0]] + value[blockRoleID[1]] + value[blockRoleID[2]] + value[blockRoleID[3]]
 
-            url = "https://bpkp-portal.eventarry.com/api/checkinout-rfid"
+            url = "http://192.168.81.77:8002/api/checkinout-rfid"
             request = {
                 "username": username,
                 "source_in": "Raspi RFID",
