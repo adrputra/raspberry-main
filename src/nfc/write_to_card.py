@@ -83,6 +83,9 @@ def basicWrite(uid, key_a, blockNumber, data):
         if not pn532.mifare_classic_authenticate_block(uid, blockNumber, nfc.MIFARE_CMD_AUTH_A, key_a):
             print(f"Authentication failed for block {blockNumber}")
             return False
+        
+        data = data.encode('utf-8')  # Convert text to bytes
+        data = data[:16].ljust(16, b' ')  # Ensure it fits in a 16-byte block
 
         # Write the data
         pn532.mifare_classic_write_block(blockNumber, data)
