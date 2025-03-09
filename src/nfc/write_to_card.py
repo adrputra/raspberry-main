@@ -65,17 +65,17 @@ def writeCardUser(request: WriteCardUserRequest):
     # Write Username
     if len(request.username) > 16:
         for i in range(0, len(blockUsername), 1):
-            basicWrite(uid=uid, key_a=key_a, blockNumber=blockUsername[i], data=request.username[:((i+1)*16)])
+            basicWrite(uid=uid, key_a=key_a, blockNumber=blockUsername[i], data=request.username[(i*16):((i+1)*16)])
     else:
         basicWrite(uid=uid, key_a=key_a, blockNumber=blockUsername[0], data=request.username[:16])
         
     # Write RoleID
     for i in range(0, len(request.role_id)//16+1, 1):
-        basicWrite(uid=uid, key_a=key_a, blockNumber=blockRoleID[i], data=request.role_id[:((i+1)*16)])
+        basicWrite(uid=uid, key_a=key_a, blockNumber=blockRoleID[i], data=request.role_id[(i*16):((i+1)*16)])
         
     # Write InstitutionID
     for i in range(0, len(request.institution_id)//16+1, 1):
-        basicWrite(uid=uid, key_a=key_a, blockNumber=blockInstitutionID[i], data=request.institution_id[:((i+1)*16)])
+        basicWrite(uid=uid, key_a=key_a, blockNumber=blockInstitutionID[i], data=request.institution_id[(i*16):((i+1)*16)])
 
 def basicWrite(uid, key_a, blockNumber, data):
     try:
