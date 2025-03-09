@@ -10,8 +10,8 @@ class WriteCardRequest(BaseModel):
     
 class WriteCardUserRequest(BaseModel):
     username: str
-    roleID: str
-    institutionID: str
+    role_id: str
+    institution_id: str
     
 class UserCheckInOutRequest(BaseModel):
     username: str

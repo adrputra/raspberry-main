@@ -24,7 +24,6 @@ def NFCWriter(request):
 
 def NFCWriteUser(request):
     try:    
-        print(request)
         request = WriteCardUserRequest(**request.json)
         result = writeCardUser(request)
         if result:
