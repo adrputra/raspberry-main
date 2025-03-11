@@ -68,21 +68,27 @@ def attendance(socketio=None):
             response = requests.post(url, json=request, headers=headers)
 
             if response.status_code == 200:
+                socketio.emit('nfc_status', {'message': 'Attendance recorded successfully'})
                 print(response.json().get("message", "Attendance recorded successfully"))
             else:
+                socketio.emit('nfc_status', {'message': 'Failed to record attendance'})
                 print(f"Failed to record attendance. Status code: {response.status_code}, Response: {response.text}")
-            socketio.emit('nfc_status', {'message': 'Failed to record attendance'})
 
         except nfc.PN532Error as e:
             print("Error:", e.errmsg)
 
         except requests.RequestException as e:
+            socketio.emit('nfc_status', {'message': 'Network error'})
             print(f"Network error: {e}")
 
         except KeyboardInterrupt:
             print("\nShutting down NFC scanner...")
             GPIO.cleanup()
             break  # Exit the loop safely
+        
+        finally:
+            socketio.emit('nfc_status', {'message': 'Waiting for NFC card...'})
+            GPIO.cleanup()
 
 if __name__ == "__main__":
     attendance()
