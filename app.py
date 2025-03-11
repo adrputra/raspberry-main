@@ -17,13 +17,12 @@ def nfc_status():
     return render_template('nfc_status.html')
 
 def start_nfc_scanner():
-    while True:
-        try:
-            socketio.emit('nfc_status', {'message': 'NFC scanner started'})
-            print("Starting NFC scanner...")
-            attendance(socketio)
-        except Exception as e:
-            print(str(e))
+    try:
+        socketio.emit('nfc_status', {'message': 'NFC scanner started'})
+        print("Starting NFC scanner...")
+        attendance(socketio)
+    except Exception as e:
+        print(str(e))
 
 if __name__ == '__main__':
     socketio.start_background_task(start_nfc_scanner)
