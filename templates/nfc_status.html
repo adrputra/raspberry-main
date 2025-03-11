@@ -12,6 +12,9 @@
             document.getElementById('status').innerText = data.status;
             document.getElementById('message').innerText = data.message;
         });
+        socket.on('nfc_message', function(data) {
+            document.getElementById('message').innerText = data.message;
+        });
     </script>
 </head>
 <body>
@@ -19,7 +22,7 @@
     <div id="status">Waiting for NFC card...</div>
 
     <br/>
-    <h3>NFC Scanner Status</h3>
-    <div id="message">Waiting for NFC card...</div>
+    <h3>Message</h3>
+    <div id="message">...</div>
 </body>
 </html>

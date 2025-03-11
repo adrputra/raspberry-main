@@ -21,6 +21,7 @@ def attendance(socketio=None):
                 print("No card detected, retrying...")
                 continue  # Restart loop to wait for the next scan
 
+            socketio.emit('nfc_status', {'status': 'Scanning ...'})
             print('Found card with UID:', uid.hex())
 
             key_a = b'\xFF\xFF\xFF\xFF\xFF\xFF'  # Default authentication key
@@ -64,21 +65,23 @@ def attendance(socketio=None):
 
             socketio.emit('nfc_status', {'status': f'Card scanned with UID: {uid.hex()}'})
             print(f'REQUEST: {url, headers, request}') 
+            
+            socketio.emit('nfc_message', {'message': 'Recording attendance...'})
 
             response = requests.post(url, json=request, headers=headers)
 
             if response.status_code == 200:
-                socketio.emit('nfc_status', {'message': 'Attendance recorded successfully'})
+                socketio.emit('nfc_message', {'message': 'Attendance recorded successfully'})
                 print(response.json().get("message", "Attendance recorded successfully"))
             else:
-                socketio.emit('nfc_status', {'message': 'Failed to record attendance'})
+                socketio.emit('nfc_message', {'message': 'Failed to record attendance'})
                 print(f"Failed to record attendance. Status code: {response.status_code}, Response: {response.text}")
 
         except nfc.PN532Error as e:
             print("Error:", e.errmsg)
 
         except requests.RequestException as e:
-            socketio.emit('nfc_status', {'message': 'Network error'})
+            socketio.emit('nfc_message', {'message': 'Network error'})
             print(f"Network error: {e}")
 
         except KeyboardInterrupt:
@@ -88,6 +91,7 @@ def attendance(socketio=None):
         
         finally:
             socketio.emit('nfc_status', {'status': 'Waiting for NFC card...'})
+            socketio.emit('nfc_message', {'message': '...'})
             GPIO.cleanup()
 
 if __name__ == "__main__":
