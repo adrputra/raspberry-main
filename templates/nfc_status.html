@@ -9,12 +9,17 @@
         const socket = io();
 
         socket.on('nfc_status', function(data) {
-            document.getElementById('status').innerText = data.message;
+            document.getElementById('status').innerText = data.status;
+            document.getElementById('message').innerText = data.message;
         });
     </script>
 </head>
 <body>
-    <h1>NFC Status</h1>
+    <h1>NFC Scanner Status</h1>
     <div id="status">Waiting for NFC card...</div>
+
+    <br/>
+    <h3>NFC Scanner Status</h3>
+    <div id="message">Waiting for NFC card...</div>
 </body>
 </html>

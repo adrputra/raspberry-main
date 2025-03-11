@@ -62,7 +62,7 @@ def attendance(socketio=None):
                 "app-role-id": roleID,
             }
 
-            socketio.emit('nfc_status', {'message': f'Card scanned with UID: {uid.hex()}'})
+            socketio.emit('nfc_status', {'status': f'Card scanned with UID: {uid.hex()}'})
             print(f'REQUEST: {url, headers, request}') 
 
             response = requests.post(url, json=request, headers=headers)
@@ -87,7 +87,7 @@ def attendance(socketio=None):
             break  # Exit the loop safely
         
         finally:
-            socketio.emit('nfc_status', {'message': 'Waiting for NFC card...'})
+            socketio.emit('nfc_status', {'status': 'Waiting for NFC card...'})
             GPIO.cleanup()
 
 if __name__ == "__main__":
