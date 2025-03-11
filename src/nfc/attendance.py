@@ -90,6 +90,7 @@ def attendance(socketio=None):
             break  # Exit the loop safely
         
         finally:
+            time.sleep(2)
             socketio.emit('nfc_status', {'status': 'Waiting for NFC card...'})
             socketio.emit('nfc_message', {'message': '...'})
             GPIO.cleanup()

@@ -10,7 +10,6 @@
 
         socket.on('nfc_status', function(data) {
             document.getElementById('status').innerText = data.status;
-            document.getElementById('message').innerText = data.message;
         });
         socket.on('nfc_message', function(data) {
             document.getElementById('message').innerText = data.message;
