@@ -62,7 +62,8 @@ def attendance(socketio=None):
                 "app-role-id": roleID,
             }
 
-            print(f'REQUEST: {url, headers, request}')
+            socketio.emit('nfc_status', {'message': f'Card scanned with UID: {uid.hex()}'})
+            print(f'REQUEST: {url, headers, request}') 
 
             response = requests.post(url, json=request, headers=headers)
 
@@ -70,6 +71,7 @@ def attendance(socketio=None):
                 print(response.json().get("message", "Attendance recorded successfully"))
             else:
                 print(f"Failed to record attendance. Status code: {response.status_code}, Response: {response.text}")
+            socketio.emit('nfc_status', {'message': 'Failed to record attendance'})
 
         except nfc.PN532Error as e:
             print("Error:", e.errmsg)

@@ -12,11 +12,17 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 routes.socketio = socketio
 app.register_blueprint(routes)
 
+@app.route('/nfc-status')
+def nfc_status():
+    return render_template('nfc_status.html')
+
 def start_nfc_scanner():
+    socketio.emit('nfc_status', {'message': 'NFC scanner started'})
     print("Starting NFC scanner...")
     attendance(socketio)
 
 if __name__ == '__main__':
+    socketio.run(app, host=config["server"]["host"], port=config["server"]["port"], debug=config["server"]["debug"])
     socketio.start_background_task(start_nfc_scanner)
 
     socketio.run(app, host=config["server"]["host"], port=config["server"]["port"], debug=config["server"]["debug"])
