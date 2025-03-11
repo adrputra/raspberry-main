@@ -93,7 +93,6 @@ def attendance(socketio=None):
             time.sleep(2)
             socketio.emit('nfc_status', {'status': 'Waiting for NFC card...'})
             socketio.emit('nfc_message', {'message': '...'})
-            GPIO.cleanup()
 
 if __name__ == "__main__":
     attendance()
