@@ -25,5 +25,7 @@ def start_nfc_scanner():
         print(str(e))
 
 if __name__ == '__main__':
-    socketio.start_background_task(start_nfc_scanner)
+    # Uncomment this line to start the NFC scanner in Background
+    # socketio.start_background_task(start_nfc_scanner)
+    
     socketio.run(app, host=config["server"]["host"], port=config["server"]["port"], debug=config["server"]["debug"])
