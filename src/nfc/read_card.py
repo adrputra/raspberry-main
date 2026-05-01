@@ -6,16 +6,30 @@ import time
 pn532 = PN532_I2C(debug=False, reset=20, req=16)
 pn532.SAM_configuration()
 
+def _is_sector_trailer(block):
+    """Returns True if block is a sector trailer (read-only keys/access bits)."""
+    return (block + 1) % 4 == 0
+
+def _is_manufacturer_block(block):
+    """Returns True if block is the manufacturer block (block 0, read-only)."""
+    return block == 0
+
 def read_text_from_card(block_number):
     """
     Reads readable text from an NFC MIFARE Classic tag.
 
     :param block_number: List of block numbers to read.
     :return: Dictionary with UID and read values, or None if failed.
+
+    Notes on MIFARE Classic 1K block layout (Sector 0):
+      Block 0 - Manufacturer block (UID + manufacturer data, hardware read-only)
+      Block 1 - Data block
+      Block 2 - Data block
+      Block 3 - Sector trailer (keys + access bits, not user data)
     """
     print('Waiting for RFID/NFC card to read from...')
     
-    timeout_counter = 10  # Set a retry limit to avoid infinite loops
+    timeout_counter = 10
     while timeout_counter > 0:
         time.sleep(2)
         uid = pn532.read_passive_target(timeout=5)
@@ -29,21 +43,29 @@ def read_text_from_card(block_number):
 
     print('Found card with UID:', uid.hex())
 
-    key_a = b'\xFF\xFF\xFF\xFF\xFF\xFF'  # Default authentication key
+    key_a = b'\xFF\xFF\xFF\xFF\xFF\xFF'
     value = {}
 
     try:
         for block in block_number:
-            # Authenticate before reading
+            if _is_sector_trailer(block):
+                print(f"Skipping block {block} (sector trailer — stores keys/access bits, not data)")
+                value[block] = None
+                continue
+
+            if _is_manufacturer_block(block):
+                print(f"Skipping block {block} (manufacturer block — hardware read-only)")
+                value[block] = None
+                continue
+
             if not pn532.mifare_classic_authenticate_block(uid, block, nfc.MIFARE_CMD_AUTH_A, key_a):
                 print(f"Authentication failed for block {block}")
                 value[block] = None
-                continue  # Skip this block but continue reading others
+                continue
 
-            # Read the block
             data = pn532.mifare_classic_read_block(block)
             if data:
-                text = data.decode('utf-8').strip()  # Decode and remove extra spaces
+                text = data.decode('utf-8').strip()
                 print(f"Read successful from block {block}: '{text}'")
                 value[block] = text
             else:
@@ -51,7 +73,7 @@ def read_text_from_card(block_number):
                 value[block] = None
 
         result = {
-            "uid": uid.hex(),  # Convert UID list to tuple for dictionary compatibility
+            "uid": uid.hex(),
             "data": value
         }
         return result

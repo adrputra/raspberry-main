@@ -6,6 +6,17 @@ from src.model.NFC import WriteCardUserRequest
 pn532 = PN532_I2C(debug=False, reset=20, req=16)
 pn532.SAM_configuration()
 
+PROTECTED_BLOCKS = {0}  # Block 0 = manufacturer block (UID/BCC/SAK/ATQA) — writing bricks the card
+
+def _is_sector_trailer(block):
+    return (block + 1) % 4 == 0
+
+def _validate_block(block):
+    if block in PROTECTED_BLOCKS:
+        raise ValueError(f"REFUSED: Block {block} is the manufacturer block. Writing here destroys the card UID and bricks it.")
+    if _is_sector_trailer(block):
+        raise ValueError(f"REFUSED: Block {block} is a sector trailer (keys/access bits). Writing here can lock the sector permanently.")
+
 def write_text_to_card(block_number, text):
     """
     Writes readable text to an NFC MIFARE Classic tag.
@@ -14,6 +25,8 @@ def write_text_to_card(block_number, text):
     :param text: The text string to store.
     :return: True if successful, False otherwise.
     """
+    _validate_block(block_number)
+
     print('Waiting for RFID/NFC card to write to...')
     while True:
         uid = pn532.read_passive_target(timeout=0.5)
@@ -78,8 +91,9 @@ def writeCardUser(request: WriteCardUserRequest):
         basicWrite(uid=uid, key_a=key_a, blockNumber=blockInstitutionID[i], data=request.institution_id[(i*16):((i+1)*16)])
 
 def basicWrite(uid, key_a, blockNumber, data):
+    _validate_block(blockNumber)
+
     try:
-        # Authenticate before writing
         if not pn532.mifare_classic_authenticate_block(uid, blockNumber, nfc.MIFARE_CMD_AUTH_A, key_a):
             print(f"Authentication failed for block {blockNumber}")
             return False
