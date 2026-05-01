@@ -45,6 +45,7 @@ import argparse
 import struct
 import subprocess
 import sys
+import time
 import os
 
 MIFARE_1K_BLOCKS = 64
@@ -130,11 +131,15 @@ def print_block0_info(uid_hex):
     print()
 
 
-def run_nfc_mfclassic(mfd_path, uid_hex):
+def run_nfc_mfclassic(mfd_path):
     """Run nfc-mfclassic with unlocked write (W) to restore the card via Gen1a backdoor."""
-    cmd = ['nfc-mfclassic', 'W', 'A', f'U{uid_hex.lower()}', mfd_path]
+    cmd = ['nfc-mfclassic', 'W', 'a', 'u', mfd_path]
     print(f"Running: {' '.join(cmd)}")
-    print("Place the bricked card on the reader NOW...\n")
+    print("Place the bricked card on the reader...")
+    for i in range(5, 0, -1):
+        print(f"  Starting in {i}...", end='\r')
+        time.sleep(1)
+    print("  Writing now!        \n")
 
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
@@ -193,10 +198,10 @@ def main():
 
     if args.dry_run:
         print("Dry run — skipping card write.")
-        print(f"To write manually: nfc-mfclassic W A U{uid.lower()} {mfd_path}")
+        print(f"To write manually: nfc-mfclassic W a u {mfd_path}")
         return
 
-    run_nfc_mfclassic(mfd_path, uid)
+    run_nfc_mfclassic(mfd_path)
 
 
 if __name__ == '__main__':
