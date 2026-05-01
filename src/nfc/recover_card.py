@@ -130,9 +130,9 @@ def print_block0_info(uid_hex):
     print()
 
 
-def run_nfc_mfclassic(mfd_path):
+def run_nfc_mfclassic(mfd_path, uid_hex):
     """Run nfc-mfclassic with unlocked write (W) to restore the card via Gen1a backdoor."""
-    cmd = ['nfc-mfclassic', 'W', 'A', mfd_path]
+    cmd = ['nfc-mfclassic', 'W', 'A', f'U{uid_hex.lower()}', mfd_path]
     print(f"Running: {' '.join(cmd)}")
     print("Place the bricked card on the reader NOW...\n")
 
@@ -193,10 +193,10 @@ def main():
 
     if args.dry_run:
         print("Dry run — skipping card write.")
-        print(f"To write manually: nfc-mfclassic W A {mfd_path}")
+        print(f"To write manually: nfc-mfclassic W A U{uid.lower()} {mfd_path}")
         return
 
-    run_nfc_mfclassic(mfd_path)
+    run_nfc_mfclassic(mfd_path, uid)
 
 
 if __name__ == '__main__':
