@@ -101,12 +101,26 @@ def to_ascii(data):
     return ''.join(chr(b) if 32 <= b < 127 else '.' for b in data)
 
 
+def reselect_card(retries=3):
+    """Re-select the card after a failed auth or communication error."""
+    for _ in range(retries):
+        time.sleep(0.2)
+        try:
+            uid = pn532.read_passive_target(timeout=1)
+            if uid:
+                return uid
+        except RuntimeError:
+            time.sleep(0.3)
+    return None
+
+
 def try_authenticate(uid, block, keys=None):
     """Try multiple keys to authenticate a block. Returns the key that worked or None."""
     if keys is None:
         keys = COMMON_KEYS
 
     for key in keys:
+        # Try Key A
         try:
             result = pn532.mifare_classic_authenticate_block(
                 uid, block, nfc.MIFARE_CMD_AUTH_A, key
@@ -115,15 +129,15 @@ def try_authenticate(uid, block, keys=None):
                 return key, "A"
         except nfc.PN532Error:
             pass
+        except RuntimeError:
+            pass
 
-        # Re-select card after failed auth
-        uid_retry = pn532.read_passive_target(timeout=0.5)
+        uid_retry = reselect_card()
         if not uid_retry:
-            time.sleep(0.1)
-            uid_retry = pn532.read_passive_target(timeout=0.5)
-            if not uid_retry:
-                return None, None
+            return None, None
+        uid = uid_retry
 
+        # Try Key B
         try:
             result = pn532.mifare_classic_authenticate_block(
                 uid, block, nfc.MIFARE_CMD_AUTH_B, key
@@ -132,29 +146,34 @@ def try_authenticate(uid, block, keys=None):
                 return key, "B"
         except nfc.PN532Error:
             pass
+        except RuntimeError:
+            pass
 
-        uid_retry = pn532.read_passive_target(timeout=0.5)
+        uid_retry = reselect_card()
         if not uid_retry:
-            time.sleep(0.1)
-            uid_retry = pn532.read_passive_target(timeout=0.5)
-            if not uid_retry:
-                return None, None
+            return None, None
+        uid = uid_retry
 
     return None, None
 
 
 def dump_card():
     """Read all 64 blocks from a MIFARE Classic 1K card."""
-    print("Waiting for card...")
-    timeout_counter = 10
+    print("Waiting for card (place only ONE card on the reader)...")
     uid = None
 
-    while timeout_counter > 0:
+    for attempt in range(10):
         time.sleep(1)
-        uid = pn532.read_passive_target(timeout=5)
-        if uid:
-            break
-        timeout_counter -= 1
+        try:
+            uid = pn532.read_passive_target(timeout=5)
+            if uid:
+                break
+        except RuntimeError as e:
+            if 'More than one card' in str(e):
+                print("  Multiple cards detected — remove extra cards!")
+            else:
+                print(f"  Communication error, retrying... ({e})")
+            time.sleep(1)
 
     if not uid:
         print("No card detected.")
@@ -165,6 +184,7 @@ def dump_card():
     blocks = []
     current_sector_key = None
     current_sector = -1
+    key_type = None
 
     for block in range(MIFARE_1K_BLOCKS):
         sector = get_sector_for_block(block)
@@ -174,13 +194,14 @@ def dump_card():
         if sector != current_sector:
             current_sector = sector
             first_block_of_sector = sector * 4
+
+            # Re-select card before authenticating a new sector
+            uid_fresh = reselect_card()
+            if uid_fresh:
+                uid = uid_fresh
+
             key, key_type = try_authenticate(uid, first_block_of_sector)
             current_sector_key = key
-
-            if key:
-                key_hex = key.hex().upper()
-            else:
-                key_hex = None
 
         block_data = {
             "block": block,
@@ -198,22 +219,44 @@ def dump_card():
             blocks.append(block_data)
             continue
 
-        try:
-            data = pn532.mifare_classic_read_block(block)
-            if data:
-                block_data["hex"] = data.hex().upper()
-                block_data["ascii"] = to_ascii(data)
-                block_data["key_used"] = current_sector_key.hex().upper()
-                block_data["key_type"] = key_type
+        # Try reading with retries for I2C communication errors
+        read_success = False
+        for read_attempt in range(3):
+            try:
+                data = pn532.mifare_classic_read_block(block)
+                if data:
+                    block_data["hex"] = data.hex().upper()
+                    block_data["ascii"] = to_ascii(data)
+                    block_data["key_used"] = current_sector_key.hex().upper()
+                    block_data["key_type"] = key_type
 
-                if block == 0:
-                    block_data["parsed"] = decode_block0(data)
-                elif is_sector_trailer(block):
-                    block_data["parsed"] = decode_sector_trailer(data)
-            else:
-                block_data["error"] = "READ_FAILED"
-        except nfc.PN532Error as e:
-            block_data["error"] = e.errmsg
+                    if block == 0:
+                        block_data["parsed"] = decode_block0(data)
+                    elif is_sector_trailer(block):
+                        block_data["parsed"] = decode_sector_trailer(data)
+                    read_success = True
+                    break
+                else:
+                    block_data["error"] = "READ_FAILED"
+                    break
+            except nfc.PN532Error as e:
+                block_data["error"] = e.errmsg
+                break
+            except RuntimeError as e:
+                if read_attempt < 2:
+                    time.sleep(0.2)
+                    uid_fresh = reselect_card()
+                    if uid_fresh:
+                        uid = uid_fresh
+                    # Re-authenticate for this sector
+                    try:
+                        pn532.mifare_classic_authenticate_block(
+                            uid, block, nfc.MIFARE_CMD_AUTH_A, current_sector_key
+                        )
+                    except (nfc.PN532Error, RuntimeError):
+                        pass
+                else:
+                    block_data["error"] = f"COMM_ERROR: {e}"
 
         blocks.append(block_data)
 
